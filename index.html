@@ -50,7 +50,7 @@
 </head>
 <body>
   <h1>Catio</h1>
-  <textarea id="msg" placeholder="Write and send..."></textarea>
+  <textarea id="msg" placeholder="Write and send..." autofocus></textarea>
   <button onclick="sendMail()">Send</button>
   <div id="status"></div>
 
@@ -140,9 +140,11 @@
 
   // 4. onloadで呼ぶ
   window.onload = function() {
-    gapiLoaded();
-    gisLoaded();
-  };
+  gapiLoaded();
+  gisLoaded();
+  document.getElementById("msg").focus(); // ← 起動時にフォーカス
+};
+
 </script>
 
 </body>
