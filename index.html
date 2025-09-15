@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Catio</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 2rem;
+      background: #f7f9fc;
+    }
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+      color: #4a90e2;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-size: 1rem;
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background: #4a90e2;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+  <!-- Google API client library -->
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+  <h1>Catio</h1>
+  <textarea id="msg" placeholder="Write and send..."></textarea>
+  <button onclick="sendMail()">Send</button>
+
+  <script>
+    // TODO: Google API 初期化
+    function initClient() {
+      gapi.client.init({
+        apiKey: "YOUR_API_KEY",
+        clientId: "YOUR_CLIENT_ID.apps.googleusercontent.com",
+        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
+        scope: "https://www.googleapis.com/auth/gmail.send"
+      }).then(() => {
+        console.log("Gmail API ready");
+      });
+    }
+
+    gapi.load("client:auth2", initClient);
+
+    async function sendMail() {
+      const msg = document.getElementById("msg").value.trim();
+      if (!msg) return;
+
+      const email = [
+        "To: youraddress@gmail.com",
+        "Subject: Catio memo",
+        "",
+        msg
+      ].join("\n");
+
+      const base64EncodedEmail = btoa(email)
+        .replace(/\+/g, "-").replace(/\//g, "_");
+
+      try {
+        await gapi.client.gmail.users.messages.send({
+          userId: "me",
+          resource: { raw: base64EncodedEmail }
+        });
+        alert("Sent!");
+        document.getElementById("msg").value = "";
+      } catch (err) {
+        alert("送信エラー: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
