@@ -51,6 +51,7 @@
 <script>
   function initClient() {
     gapi.client.init({
+      apiKey: "AIzaSyBuXzmmyAYKjQOE9TpryCwzOzNatKcdGeo",
       clientId: "965822944270-tvg95ppkc2pgirmo7ad2sm4qpo8ntkq3.apps.googleusercontent.com",
       discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
       scope: "https://www.googleapis.com/auth/gmail.send"
@@ -59,14 +60,14 @@
       alert("Gmail API ready");
     }).catch(err => {
       console.error("❌ initClient error:", err);
-      alert("initClient error: " + err.message);
+      alert("initClient error: " + JSON.stringify(err, null, 2));
     });
   }
 
   gapi.load("client:auth2", initClient);
 
   async function sendMail() {
-    alert("sendMail start"); // ← デバッグ用
+    alert("sendMail start");
 
     const msg = document.getElementById("msg").value.trim();
     if (!msg) {
@@ -101,12 +102,12 @@
       });
 
       console.log("✅ API response:", response);
-      alert("送信完了！");
+      alert("送信完了！\n\n" + JSON.stringify(response, null, 2));
       document.getElementById("msg").value = "";
 
     } catch (err) {
       console.error("❌ 送信エラー:", err);
-      alert("送信エラー: " + (err.message || err));
+      alert("送信エラー詳細: " + JSON.stringify(err, null, 2));
     }
   }
 </script>
