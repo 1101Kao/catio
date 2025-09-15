@@ -50,19 +50,49 @@
   <textarea id="msg" placeholder="Write and send..."></textarea>
   <button onclick="sendMail()">Send</button>
 
-<div id="status" style="margin-top:1rem; color:#4a90e2; font-size:0.9rem;"></div>
-
 <script>
+  let tokenClient;
+  let gapiInited = false;
+  let gisInited = false;
+
+  // 1. GAPIロード
+  function gapiLoaded() {
+    gapi.load('client', initializeGapiClient);
+  }
+
+  async function initializeGapiClient() {
+    await gapi.client.init({
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
+    });
+    gapiInited = true;
+    console.log("✅ Gmail API ready");
+  }
+
+  // 2. GISロード
+  function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: "965822944270-tvg95ppkc2pgirmo7ad2sm4qpo8ntkq3.apps.googleusercontent.com",
+      scope: "https://www.googleapis.com/auth/gmail.send",
+      callback: (tokenResponse) => {
+        console.log("✅ トークン取得:", tokenResponse);
+      },
+    });
+    gisInited = true;
+  }
+
+  // 3. メール送信
   async function sendMail() {
-    const msg = document.getElementById("msg").value.trim();
-    if (!msg) {
-      setStatus("⚠️ 空メッセージです", "red");
+    if (!gapiInited || !gisInited) {
+      alert("まだ準備できてないよ");
       return;
     }
 
-    try {
-      if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
-        await gapi.auth2.getAuthInstance().signIn();
+    // アクセストークン取得（ポップアップ表示）
+    tokenClient.callback = async (tokenResponse) => {
+      const msg = document.getElementById("msg").value.trim();
+      if (!msg) {
+        alert("⚠️ メッセージが空です");
+        return;
       }
 
       const email = [
@@ -79,26 +109,28 @@
         .replace(/\//g, "_")
         .replace(/=+$/, "");
 
-      await gapi.client.gmail.users.messages.send({
-        userId: "me",
-        resource: { raw: base64EncodedEmail }
-      });
+      try {
+        const response = await gapi.client.gmail.users.messages.send({
+          userId: "me",
+          resource: { raw: base64EncodedEmail }
+        });
+        console.log("✅ 送信成功:", response);
+        alert("送信完了！");
+        document.getElementById("msg").value = "";
+      } catch (err) {
+        console.error("❌ 送信失敗:", err);
+        alert("送信エラー: " + (err.message || JSON.stringify(err)));
+      }
+    };
 
-      document.getElementById("msg").value = "";
-      setStatus("✅ 送信完了！", "green");
-
-    } catch (err) {
-      console.error("送信エラー:", err);
-      setStatus("❌ エラー: " + (err.message || err), "red");
-    }
+    tokenClient.requestAccessToken();
   }
 
-  function setStatus(text, color) {
-    const el = document.getElementById("status");
-    el.textContent = text;
-    el.style.color = color || "#4a90e2";
-    setTimeout(() => { el.textContent = ""; }, 4000);
-  }
+  // 4. onloadで呼ぶ
+  window.onload = function() {
+    gapiLoaded();
+    gisLoaded();
+  };
 </script>
 
 </body>
