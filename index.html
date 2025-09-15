@@ -48,46 +48,50 @@
   <textarea id="msg" placeholder="Write and send..."></textarea>
   <button onclick="sendMail()">Send</button>
 
-  <script>
-    // TODO: Google API 初期化
-    function initClient() {
-      gapi.client.init({
-        apiKey: "YOUR_API_KEY",
-        clientId: "965822944270-tvg95ppkc2pgirmo7ad2sm4qpo8ntkq3.apps.googleusercontent.com",
-        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
-        scope: "https://www.googleapis.com/auth/gmail.send"
-      }).then(() => {
-        console.log("Gmail API ready");
+<script>
+  function initClient() {
+    gapi.client.init({
+      clientId: "965822944270-tvg95ppkc2pgirmo7ad2sm4qpo8ntkq3.apps.googleusercontent.com",
+      discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest"],
+      scope: "https://www.googleapis.com/auth/gmail.send"
+    }).then(() => {
+      console.log("Gmail API ready");
+    });
+  }
+
+  gapi.load("client:auth2", initClient);
+
+  async function sendMail() {
+    const msg = document.getElementById("msg").value.trim();
+    if (!msg) return;
+
+    // ✅ まだログインしてなければサインイン
+    if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
+      await gapi.auth2.getAuthInstance().signIn();
+    }
+
+    const email = [
+      "To: youraddress@gmail.com", // ← 自分のアドレスに変更
+      "Subject: Catio memo",
+      "",
+      msg
+    ].join("\n");
+
+    const base64EncodedEmail = btoa(email)
+      .replace(/\+/g, "-").replace(/\//g, "_");
+
+    try {
+      await gapi.client.gmail.users.messages.send({
+        userId: "me",
+        resource: { raw: base64EncodedEmail }
       });
+      alert("Sent!");
+      document.getElementById("msg").value = "";
+    } catch (err) {
+      alert("送信エラー: " + err.message);
     }
+  }
+</script>
 
-    gapi.load("client:auth2", initClient);
-
-    async function sendMail() {
-      const msg = document.getElementById("msg").value.trim();
-      if (!msg) return;
-
-      const email = [
-        "To: youraddress@gmail.com",
-        "Subject: Catio memo",
-        "",
-        msg
-      ].join("\n");
-
-      const base64EncodedEmail = btoa(email)
-        .replace(/\+/g, "-").replace(/\//g, "_");
-
-      try {
-        await gapi.client.gmail.users.messages.send({
-          userId: "me",
-          resource: { raw: base64EncodedEmail }
-        });
-        alert("Sent!");
-        document.getElementById("msg").value = "";
-      } catch (err) {
-        alert("送信エラー: " + err.message);
-      }
-    }
-  </script>
 </body>
 </html>
