@@ -35,8 +35,11 @@
       color: #fff;
       cursor: pointer;
     }
-    button:hover {
-      opacity: 0.9;
+    button:hover { opacity: 0.9; }
+    #status {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #333;
     }
   </style>
 
@@ -49,11 +52,21 @@
   <h1>Catio</h1>
   <textarea id="msg" placeholder="Write and send..."></textarea>
   <button onclick="sendMail()">Send</button>
+  <div id="status"></div>
 
 <script>
   let tokenClient;
   let gapiInited = false;
   let gisInited = false;
+
+  function setStatus(text, color = "#333") {
+    const status = document.getElementById("status");
+    status.textContent = text;
+    status.style.color = color;
+    if (text) {
+      setTimeout(() => { status.textContent = ""; }, 4000);
+    }
+  }
 
   // 1. GAPIロード
   function gapiLoaded() {
@@ -83,15 +96,14 @@
   // 3. メール送信
   async function sendMail() {
     if (!gapiInited || !gisInited) {
-      alert("まだ準備できてないよ");
+      setStatus("❌ まだ準備できてないよ", "red");
       return;
     }
 
-    // アクセストークン取得（ポップアップ表示）
     tokenClient.callback = async (tokenResponse) => {
       const msg = document.getElementById("msg").value.trim();
       if (!msg) {
-        alert("⚠️ メッセージが空です");
+        setStatus("⚠️ メッセージが空です", "orange");
         return;
       }
 
@@ -115,11 +127,11 @@
           resource: { raw: base64EncodedEmail }
         });
         console.log("✅ 送信成功:", response);
-        alert("送信完了！");
+        setStatus("✅ 送信完了！", "green");
         document.getElementById("msg").value = "";
       } catch (err) {
         console.error("❌ 送信失敗:", err);
-        alert("送信エラー: " + (err.message || JSON.stringify(err)));
+        setStatus("❌ 送信エラー: " + (err.message || JSON.stringify(err)), "red");
       }
     };
 
