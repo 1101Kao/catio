@@ -49,6 +49,7 @@
   <button onclick="sendMail()">Send</button>
 
 <script>
+  // ✅ Gmail API 初期化
   function initClient() {
     gapi.client.init({
       clientId: "965822944270-tvg95ppkc2pgirmo7ad2sm4qpo8ntkq3.apps.googleusercontent.com",
@@ -56,42 +57,49 @@
       scope: "https://www.googleapis.com/auth/gmail.send"
     }).then(() => {
       console.log("Gmail API ready");
+    }).catch(err => {
+      console.error("Init error:", err);
     });
   }
 
   gapi.load("client:auth2", initClient);
 
+  // ✅ メール送信処理
   async function sendMail() {
     const msg = document.getElementById("msg").value.trim();
     if (!msg) return;
 
-    // ✅ まだログインしてなければサインイン
+    // まだログインしてなければサインイン
     if (!gapi.auth2.getAuthInstance().isSignedIn.get()) {
       await gapi.auth2.getAuthInstance().signIn();
     }
 
     const email = [
-      "To: kaneharakaoru@gmail.com", // ← 自分のアドレスに変更
+      "To: kaneharakaoru@gmail.com", // ← 宛先（必要に応じて変更）
       "Subject: Catio memo",
+      "Content-Type: text/plain; charset=utf-8",
       "",
       msg
-    ].join("\n");
+    ].join("\r\n");
 
-    const base64EncodedEmail = btoa(email)
-      .replace(/\+/g, "-").replace(/\//g, "_");
+    // Base64 URL-safe 変換
+    const base64EncodedEmail = btoa(unescape(encodeURIComponent(email)))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
 
     try {
       await gapi.client.gmail.users.messages.send({
         userId: "me",
         resource: { raw: base64EncodedEmail }
       });
-      alert("Sent!");
+      alert("送信完了！ Gmailの送信済みに入ります。");
       document.getElementById("msg").value = "";
     } catch (err) {
-      alert("送信エラー: " + err.message);
+      console.error("送信エラー:", err);
+      alert("送信エラー: " + (err.message || err));
     }
   }
 </script>
-
 </body>
 </html>
